@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}Оформление заказа - Сладкий рай{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">📦 Оформление заказа</h1>
+
+    <div class="checkout-container">
+        <div class="order-summary">
+            <h3>Ваш заказ:</h3>
+            {% for item in items %}
+                <div class="order-item">
+                    <span>{{ item.name }} ({{ item.weight }} кг) × {{ item.quantity }}</span>
+                    <span>{{ item.total }} ₽</span>
+                </div>
+            {% endfor %}
+            <div class="order-total">
+                <strong>Итого:</strong>
+                <strong>{{ total }} ₽</strong>
+            </div>
+        </div>
+
+        <form method="POST" class="order-form">
+            {% if error %}
+                <div class="error-message">{{ error }}</div>
+            {% endif %}
+
+            <div class="form-group">
+                <label for="name">👤 Ваше имя *</label>
+                <input type="text" id="name" name="name" required placeholder="Иван Иванов">
+            </div>
+
+            <div class="form-group">
+                <label for="phone">📞 Телефон *</label>
+                <input type="tel" id="phone" name="phone" required placeholder="+7 923 456-78-90">
+            </div>
+
+            <div class="form-group">
+                <label for="address">📍 Адрес доставки *</label>
+                <input type="text" id="address" name="address" required placeholder="ул. Ленина, д. 10, кв. 5">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="delivery_date">📅 Дата доставки *</label>
+                    <input type="date" id="delivery_date" name="delivery_date" required min="{{ now().strftime('%Y-%m-%d') }}">
+                </div>
+
+                <div class="form-group">
+                    <label for="delivery_time">⏰ Время доставки *</label>
+                    <input type="time" id="delivery_time" name="delivery_time" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="wish">📝 Пожелания к торту</label>
+                <textarea id="wish" name="wish" rows="3" placeholder="Надпись на торте, особые пожелания..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-large">✅ Подтвердить заказ</button>
+        </form>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Устанавливаем минимальную дату на сегодня
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('delivery_date').min = today;
+</script>
+{% endblock %}

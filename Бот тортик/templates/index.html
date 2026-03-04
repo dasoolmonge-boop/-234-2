@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Сладкий рай{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">🍰 Наши торты</h1>
+
+    {% if cakes %}
+        <div class="cakes-grid">
+            {% for cake in cakes %}
+                <div class="cake-card" data-cake-id="{{ cake.id }}">
+                    <div class="cake-image-container">
+                        {% if cake.photo_url %}
+                            <img src="{{ cake.photo_url }}" alt="{{ cake.name }}" class="cake-image"
+                                 onerror="this.src='{{ url_for('static', filename='images/default-cake.jpg') }}'">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/default-cake.jpg') }}" alt="{{ cake.name }}" class="cake-image">
+                        {% endif %}
+                    </div>
+                    <div class="cake-info">
+                        <h3 class="cake-title">{{ cake.name }}</h3>
+                        <div class="cake-details">
+                            <span class="cake-price">{{ cake.price }} ₽</span>
+                            <span class="cake-weight">{{ cake.weight }} кг</span>
+                        </div>
+                        <p class="cake-description">{{ cake.description[:100] }}{% if cake.description|length > 100 %}...{% endif %}</p>
+                        <button onclick="addToCart({{ cake.id }})" class="btn btn-primary add-to-cart-btn">
+                            🛒 Добавить в корзину
+                        </button>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>😢 Пока нет доступных тортов</p>
+            <p>Скоро здесь появятся наши вкуснейшие торты!</p>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function addToCart(cakeId) {
+        try {
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = '⏳ Добавление...';
+
+            const response = await fetch(`/add_to_cart/${cakeId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Показываем уведомление
+                if (typeof showNotification === 'function') {
+                    showNotification('✅ Торт добавлен в корзину!');
+                } else {
+                    alert('✅ Торт добавлен в корзину!');
+                }
+
+                // Обновляем счетчик корзины
+                await updateCartCount();
+
+                // Анимация кнопки
+                button.textContent = '✅ Добавлено!';
+                button.classList.add('btn-success');
+
+                setTimeout(() => {
+                    button.textContent = '🛒 Добавить в корзину';
+                    button.classList.remove('btn-success');
+                    button.disabled = false;
+                }, 2000);
+            } else {
+                button.textContent = '🛒 Добавить в корзину';
+                button.disabled = false;
+                if (typeof showNotification === 'function') {
+                    showNotification('❌ ' + data.error);
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            }
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            if (typeof showNotification === 'function') {
+                showNotification('❌ Ошибка при добавлении в корзину');
+            } else {
+                alert('❌ Ошибка при добавлении в корзину');
+            }
+        }
+    }
+</script>
+{% endblock %}

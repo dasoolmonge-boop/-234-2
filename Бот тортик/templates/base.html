@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Сладкий рай{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <script>
+        // Инициализация Telegram Web App
+        const tg = window.Telegram.WebApp;
+
+        // Расширяем на всё окно
+        tg.expand();
+
+        // Устанавливаем основной цвет
+        tg.setHeaderColor('#764ba2');
+        tg.setBackgroundColor('#f5f5f5');
+
+        // Показываем основную кнопку (если нужно)
+        tg.MainButton.setText('ЗАКАЗАТЬ');
+        tg.MainButton.hide();
+
+        // Функция для отправки данных в бот
+        function sendDataToBot(data) {
+            tg.sendData(JSON.stringify(data));
+        }
+
+        // Функция для показа уведомления
+        function showNotification(message) {
+            if (tg.showPopup) {
+                tg.showPopup({
+                    title: 'Уведомление',
+                    message: message,
+                    buttons: [{type: 'close'}]
+                });
+            } else {
+                alert(message);
+            }
+        }
+
+        // Функция для показа подтверждения
+        function showConfirm(message, callback) {
+            if (tg.showConfirm) {
+                tg.showConfirm(message, callback);
+            } else {
+                callback(confirm(message));
+            }
+        }
+    </script>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="nav-logo">🍰 Сладкий рай</a>
+            <div class="nav-menu">
+                <a href="{{ url_for('index') }}" class="nav-link">Главная</a>
+                <a href="{{ url_for('cart') }}" class="nav-link cart-link">
+                    🛒 Корзина
+                    {% if cart_count > 0 %}
+                        <span class="cart-badge">{{ cart_count }}</span>
+                    {% endif %}
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>🍰 Сладкий рай - домашние торты с любовью</p>
+            <p>📞 +7 (923) 456-78-90 | 📍 г. Кызыл, ул. Кочетова, 25</p>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+
+    <script>
+        // Функция для обновления счетчика корзины
+        async function updateCartCount() {
+            try {
+                const response = await fetch('/api/cart/count');
+                const data = await response.json();
+                const cartBadge = document.querySelector('.cart-badge');
+                if (cartBadge) {
+                    if (data.count > 0) {
+                        cartBadge.textContent = data.count;
+                        cartBadge.style.display = 'inline';
+                    } else {
+                        cartBadge.style.display = 'none';
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating cart count:', error);
+            }
+        }
+    </script>
+</body>
+</html>

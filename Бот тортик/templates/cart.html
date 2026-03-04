@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Корзина - Сладкий рай{% endblock %}
+
+{% block content %}
+    <h1 class="page-title">🛒 Ваша корзина</h1>
+
+    {% if cart_items %}
+        <div class="cart-container">
+            <div class="cart-items">
+                {% for item in cart_items %}
+                    <div class="cart-item" data-cake-id="{{ item.id }}">
+                        <div class="cart-item-image">
+                            {% if item.photo_url %}
+                                <img src="{{ item.photo_url }}" alt="{{ item.name }}" class="cart-item-img"
+                                     onerror="this.src='{{ url_for('static', filename='images/default-cake.jpg') }}'">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='images/default-cake.jpg') }}" alt="{{ item.name }}" class="cart-item-img">
+                            {% endif %}
+                        </div>
+                        <div class="cart-item-info">
+                            <h3>{{ item.name }}</h3>
+                            <p>{{ item.weight }} кг</p>
+                        </div>
+                        <div class="cart-item-price">{{ item.price }} ₽ × {{ item.quantity }}</div>
+                        <div class="cart-item-total">{{ item.total }} ₽</div>
+                        <div class="cart-item-actions">
+                            <button onclick="updateQuantity({{ item.id }}, 'remove')" class="btn btn-small">−</button>
+                            <span class="quantity">{{ item.quantity }}</span>
+                            <button onclick="updateQuantity({{ item.id }}, 'add')" class="btn btn-small">+</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <div class="cart-summary">
+                <h3>Итого:</h3>
+                <div class="total-price">{{ total }} ₽</div>
+                <button onclick="clearCart()" class="btn btn-secondary">🧹 Очистить корзину</button>
+                <a href="{{ url_for('checkout') }}" class="btn btn-primary btn-large">📦 Оформить заказ</a>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <p>🛒 Ваша корзина пуста</p>
+            <a href="{{ url_for('index') }}" class="btn btn-primary">🍰 Перейти к тортам</a>
+        </div>
+    {% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function updateQuantity(cakeId, action) {
+        try {
+            const endpoint = action === 'add' ? 'add_to_cart' : 'remove_from_cart';
+            const response = await fetch(`/${endpoint}/${cakeId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                location.reload();
+            }
+        } catch (error) {
+            console.error('Error updating cart:', error);
+            if (typeof showNotification === 'function') {
+                showNotification('❌ Ошибка при обновлении корзины');
+            }
+        }
+    }
+
+    async function clearCart() {
+        const confirmClear = async () => {
+            try {
+                const response = await fetch('/clear_cart', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Error clearing cart:', error);
+            }
+        };
+
+        if (typeof showConfirm === 'function') {
+            showConfirm('Очистить корзину?', (confirmed) => {
+                if (confirmed) confirmClear();
+            });
+        } else {
+            if (confirm('Очистить корзину?')) {
+                confirmClear();
+            }
+        }
+    }
+</script>
+{% endblock %}
